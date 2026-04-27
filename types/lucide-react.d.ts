@@ -1,5 +1,5 @@
-declare module 'lucide-react' {
-  import { FC, SVGProps } from 'react';
+declare module "lucide-react" {
+  import { FC, SVGProps } from "react";
 
   type LucideIcon = FC<SVGProps<SVGSVGElement> & { size?: number | string }>;
 
