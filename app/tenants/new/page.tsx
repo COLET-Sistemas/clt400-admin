@@ -157,11 +157,13 @@ export default function NewTenantPage() {
           <label className="block text-sm font-medium text-slate-700 mb-1.5">
             Nome da empresa <span className="text-red-500">*</span>
           </label>
+
           <input
             type="text"
             value={name}
             onChange={(e) => {
-              const value = e.target.value;
+              const value = e.target.value.toUpperCase(); // força maiúsculo
+
               setName(value);
               validateField("name", value);
 
@@ -171,8 +173,9 @@ export default function NewTenantPage() {
                 validateField("slug", slug);
               }
             }}
-            className={inputClass("name", name)}
+            className={`${inputClass("name", name)} uppercase`} // visual também
           />
+
           {errors.name && (
             <p className="text-xs text-red-500 mt-1">{errors.name}</p>
           )}
