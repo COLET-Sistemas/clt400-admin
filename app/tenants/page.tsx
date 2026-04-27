@@ -40,7 +40,7 @@ export default async function TenantsPage() {
                 <th className="px-4 py-3 font-medium">URL de acesso</th>
                 <th className="px-4 py-3 font-medium">API</th>
                 <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Setup</th>
+                <th className="px-4 py-3 font-medium">Acesso</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -74,7 +74,15 @@ export default async function TenantsPage() {
                   <td className="px-4 py-3 text-xs">
                     {t.setupCompletedAt ? (
                       <span className="text-emerald-700">
-                        ✓ {new Date(t.setupCompletedAt).toLocaleDateString()}
+                        ✓{" "}
+                        {new Date(t.setupCompletedAt).toLocaleDateString(
+                          "pt-BR",
+                          {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          },
+                        )}
                       </span>
                     ) : (
                       <span className="text-slate-500">Pendente</span>
