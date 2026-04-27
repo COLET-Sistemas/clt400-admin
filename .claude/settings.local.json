@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir /S /B \"C:\\\\ColetFrontend\\\\clt400tt2\\\\app\\\\*.tsx\" \"C:\\\\ColetFrontend\\\\clt400tt2\\\\app\\\\*.ts\")"
+    ]
+  }
+}
