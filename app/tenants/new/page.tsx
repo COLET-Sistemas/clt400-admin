@@ -12,13 +12,28 @@ interface CreateResult {
   apiToken: string;
 }
 
+// 🔥 função de geração de slug
+function generateSlug(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 export default function NewTenantPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [apiProtocol, setApiProtocol] = useState<"http" | "https">("https");
   const [apiHost, setApiHost] = useState("");
   const [apiPort, setApiPort] = useState("8080");
+
   const [slugOverride, setSlugOverride] = useState("");
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CreateResult | null>(null);
@@ -79,6 +94,7 @@ export default function NewTenantPage() {
         onSubmit={onSubmit}
         className="bg-white rounded-xl border border-slate-200 p-6 space-y-4"
       >
+        {/* NOME */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1.5">
             Nome da empresa
@@ -86,13 +102,22 @@ export default function NewTenantPage() {
           <input
             type="text"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setName(value);
+
+              // 🔥 só atualiza automaticamente se o usuário não mexeu no slug
+              if (!slugManuallyEdited) {
+                setSlugOverride(generateSlug(value));
+              }
+            }}
             required
             placeholder="Ex: Empresa Exemplo Ltda"
             className="input-field"
           />
         </div>
 
+        {/* SLUG */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1.5">
             Slug da URL (opcional)
@@ -100,10 +125,11 @@ export default function NewTenantPage() {
           <input
             type="text"
             value={slugOverride}
-            onChange={(e) =>
-              setSlugOverride(e.target.value.toLowerCase().trim())
-            }
-            placeholder="Deixe em branco para gerar do nome"
+            onChange={(e) => {
+              setSlugManuallyEdited(true);
+              setSlugOverride(generateSlug(e.target.value));
+            }}
+            placeholder="Gerado automaticamente a partir do nome"
             className="input-field"
             pattern="[a-z0-9](-?[a-z0-9])*"
             maxLength={30}
@@ -114,6 +140,7 @@ export default function NewTenantPage() {
           </p>
         </div>
 
+        {/* API */}
         <div className="grid grid-cols-3 gap-3">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">
@@ -145,6 +172,7 @@ export default function NewTenantPage() {
           </div>
         </div>
 
+        {/* PORTA */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1.5">
             Porta
