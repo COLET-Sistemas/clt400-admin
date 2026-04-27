@@ -12,7 +12,6 @@ interface CreateResult {
   apiToken: string;
 }
 
-// 🔥 função de geração de slug
 function generateSlug(value: string) {
   return value
     .toLowerCase()
@@ -26,6 +25,7 @@ function generateSlug(value: string) {
 
 export default function NewTenantPage() {
   const router = useRouter();
+
   const [name, setName] = useState("");
   const [apiProtocol, setApiProtocol] = useState<"http" | "https">("https");
   const [apiHost, setApiHost] = useState("");
@@ -34,14 +34,63 @@ export default function NewTenantPage() {
   const [slugOverride, setSlugOverride] = useState("");
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CreateResult | null>(null);
+
+  function validateField(field: string, value: string) {
+    let error = "";
+
+    switch (field) {
+      case "name":
+        if (!value.trim()) error = "Informe o nome da empresa.";
+        break;
+
+      case "slug":
+        if (!value) error = "Slug é obrigatório.";
+        else if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(value))
+          error = "Slug inválido.";
+        break;
+
+      case "apiHost":
+        if (!value.trim()) error = "Informe o host.";
+        break;
+
+      case "apiPort":
+        if (!value) error = "Informe a porta.";
+        else if (Number(value) < 1 || Number(value) > 65535)
+          error = "Porta inválida.";
+        break;
+    }
+
+    setErrors((prev) => ({ ...prev, [field]: error }));
+    return !error;
+  }
+
+  function isFormValid() {
+    return (
+      name &&
+      slugOverride &&
+      apiHost &&
+      apiPort &&
+      Object.values(errors).every((e) => !e)
+    );
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+
+    const valid =
+      validateField("name", name) &&
+      validateField("slug", slugOverride) &&
+      validateField("apiHost", apiHost) &&
+      validateField("apiPort", apiPort);
+
+    if (!valid) return;
+
     setLoading(true);
+
     try {
       const res = await fetch("/api/tenants", {
         method: "POST",
@@ -51,17 +100,20 @@ export default function NewTenantPage() {
           apiProtocol,
           apiHost,
           apiPort: Number(apiPort),
-          slugOverride: slugOverride || undefined,
+          slugOverride,
         }),
       });
+
       const data = await res.json();
+
       if (!res.ok) {
-        setError(data.error || "Erro ao criar tenant.");
+        alert(data.error || "Erro ao criar tenant.");
         return;
       }
+
       setResult(data);
     } catch {
-      setError("Erro de rede.");
+      alert("Erro de rede.");
     } finally {
       setLoading(false);
     }
@@ -71,6 +123,12 @@ export default function NewTenantPage() {
     setResult(null);
     router.push(`/tenants/${result?.tenant.id ?? ""}`);
     router.refresh();
+  }
+
+  function inputClass(field: string, value: string) {
+    if (errors[field]) return "input-field border-red-500";
+    if (value) return "input-field border-green-500";
+    return "input-field";
   }
 
   return (
@@ -86,7 +144,7 @@ export default function NewTenantPage() {
       <header>
         <h1 className="text-2xl font-bold text-slate-800">Novo tenant</h1>
         <p className="text-sm text-slate-500">
-          O setup_code e o api_token serão gerados automaticamente.
+          Campos com <span className="text-red-500">*</span> são obrigatórios
         </p>
       </header>
 
@@ -97,7 +155,7 @@ export default function NewTenantPage() {
         {/* NOME */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1.5">
-            Nome da empresa
+            Nome da empresa <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -105,99 +163,102 @@ export default function NewTenantPage() {
             onChange={(e) => {
               const value = e.target.value;
               setName(value);
+              validateField("name", value);
 
-              // 🔥 só atualiza automaticamente se o usuário não mexeu no slug
               if (!slugManuallyEdited) {
-                setSlugOverride(generateSlug(value));
+                const slug = generateSlug(value);
+                setSlugOverride(slug);
+                validateField("slug", slug);
               }
             }}
-            required
-            placeholder="Ex: Empresa Exemplo Ltda"
-            className="input-field"
+            className={inputClass("name", name)}
           />
+          {errors.name && (
+            <p className="text-xs text-red-500 mt-1">{errors.name}</p>
+          )}
         </div>
 
         {/* SLUG */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1.5">
-            Slug da URL (opcional)
+            Slug da URL <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             value={slugOverride}
             onChange={(e) => {
               setSlugManuallyEdited(true);
-              setSlugOverride(generateSlug(e.target.value));
+              const value = generateSlug(e.target.value);
+              setSlugOverride(value);
+              validateField("slug", value);
             }}
-            placeholder="Gerado automaticamente a partir do nome"
-            className="input-field"
-            pattern="[a-z0-9](-?[a-z0-9])*"
-            maxLength={30}
+            className={inputClass("slug", slugOverride)}
           />
-          <p className="text-xs text-slate-500 mt-1">
-            a-z, 0-9, hífen. Max 30 chars. Ex: empresateste →{" "}
-            clt400tt2.coletsistemas.com.br/empresateste
-          </p>
+          {errors.slug && (
+            <p className="text-xs text-red-500 mt-1">{errors.slug}</p>
+          )}
         </div>
 
         {/* API */}
         <div className="grid grid-cols-3 gap-3">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">
-              Protocolo
+              Protocolo <span className="text-red-500">*</span>
             </label>
             <select
               value={apiProtocol}
               onChange={(e) =>
                 setApiProtocol(e.target.value as "http" | "https")
               }
-              className="input-field"
+              className="input-field border-green-500"
             >
               <option value="https">HTTPS</option>
               <option value="http">HTTP</option>
             </select>
           </div>
+
           <div className="col-span-2">
             <label className="block text-sm font-medium text-slate-700 mb-1.5">
-              Host
+              Host <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               value={apiHost}
-              onChange={(e) => setApiHost(e.target.value)}
-              required
-              placeholder="Ex: 192.168.1.50 ou api.cliente.com"
-              className="input-field"
+              onChange={(e) => {
+                setApiHost(e.target.value);
+                validateField("apiHost", e.target.value);
+              }}
+              className={inputClass("apiHost", apiHost)}
             />
+            {errors.apiHost && (
+              <p className="text-xs text-red-500 mt-1">{errors.apiHost}</p>
+            )}
           </div>
         </div>
 
         {/* PORTA */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1.5">
-            Porta
+            Porta <span className="text-red-500">*</span>
           </label>
           <input
             type="number"
             value={apiPort}
-            onChange={(e) => setApiPort(e.target.value)}
-            required
-            min={1}
-            max={65535}
-            className="input-field"
+            onChange={(e) => {
+              setApiPort(e.target.value);
+              validateField("apiPort", e.target.value);
+            }}
+            className={inputClass("apiPort", apiPort)}
           />
+          {errors.apiPort && (
+            <p className="text-xs text-red-500 mt-1">{errors.apiPort}</p>
+          )}
         </div>
-
-        {error && (
-          <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-            {error}
-          </div>
-        )}
 
         <button
           type="submit"
-          disabled={loading}
-          className="btn-primary w-full"
+          disabled={!isFormValid() || loading}
+          className="btn-primary w-full disabled:opacity-50"
         >
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -211,7 +272,7 @@ export default function NewTenantPage() {
       {result && (
         <CopySecretModal
           title="Tenant criado"
-          warning="Copie o setup_code e o api_token agora. Eles NÃO serão exibidos novamente. O api_token deve ser instalado no .env da API local do cliente. O setup_code deve ser entregue ao técnico para o primeiro acesso em /setup."
+          warning="Copie o setup_code e o api_token agora. Eles NÃO serão exibidos novamente."
           secrets={[
             {
               label: "URL de acesso",
