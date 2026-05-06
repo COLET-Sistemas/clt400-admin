@@ -14,7 +14,8 @@ const RESERVED_SLUGS = new Set([
 ]);
 
 export function generateSetupCode(): string {
-  return randomBytes(8).toString("base64url").slice(0, 10).toUpperCase();
+  const num = randomBytes(4).readUInt32BE(0) % 1_000_000;
+  return num.toString().padStart(6, "0");
 }
 
 export function generateApiToken(): string {

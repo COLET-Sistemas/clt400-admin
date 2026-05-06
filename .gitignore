@@ -7,3 +7,6 @@ node_modules
 *.log
 .vercel
 next-env.d.ts
+.claude
+.claude/worktrees/thirsty-murdock-fb34ba
+.gitignore

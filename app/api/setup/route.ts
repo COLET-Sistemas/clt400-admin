@@ -18,7 +18,7 @@ export async function OPTIONS() {
 
 const setupSchema = z.object({
   slug: z.string().trim().min(1).max(30),
-  setup_code: z.string().trim().min(1),
+  setup_code: z.string().trim().length(6).regex(/^\d{6}$/),
 });
 
 export async function POST(request: NextRequest) {
