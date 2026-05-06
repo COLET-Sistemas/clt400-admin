@@ -17,45 +17,6 @@ Painel administrativo para cadastro de tenants (empresas) do ecossistema CLT400.
 - Tailwind 4
 - Auth: login único via env vars, cookie httpOnly assinado com HMAC
 
-## Setup
-
-1. **Criar banco Neon (grátis)**
-   - https://neon.tech → criar conta → criar projeto `clt400-tenants`.
-   - Copiar connection string (com `?sslmode=require`).
-
-2. **Instalar deps**
-   ```bash
-   cd C:\ColetFrontend\clt400-admin
-   npm install
-   ```
-
-3. **Configurar variáveis de ambiente**
-   ```bash
-   cp .env.local.example .env.local
-   ```
-   Editar `.env.local`:
-   - `DATABASE_URL` — cole a string do Neon.
-   - `ADMIN_USER` / `ADMIN_PASSWORD` — credenciais do painel.
-   - `ADMIN_SESSION_SECRET` — gere 32 bytes:
-     ```bash
-     node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-     ```
-
-4. **Criar schema no banco**
-   - Via Drizzle Kit (recomendado):
-     ```bash
-     npm run db:push
-     ```
-   - Ou rodar o SQL direto:
-     ```bash
-     psql $DATABASE_URL -f drizzle/0000_init.sql
-     ```
-
-5. **Rodar em dev**
-   ```bash
-   npm run dev
-   ```
-   Abrir http://localhost:3000 → redireciona para `/login`.
 
 ## Comandos úteis
 
